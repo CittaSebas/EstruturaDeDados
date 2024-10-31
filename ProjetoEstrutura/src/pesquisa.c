@@ -63,6 +63,7 @@ Vertice* cria_vertice(Registro *registro) {
     novo->registro->entrada = malloc(sizeof(Data));
     novo->registro->idade = registro->idade;
     strcpy(novo->registro->nome, registro->nome);
+    strcpy(novo->registro->rg, registro->rg);
     novo->registro->entrada->dia = registro->entrada->dia;
     novo->registro->entrada->mes = registro->entrada->mes;
     novo->registro->entrada->ano = registro->entrada->ano;
@@ -228,16 +229,16 @@ void liberar_arvore(Vertice* vertice) {
 
 // Funcao para o uso desse modulo, para ser chamado no main
 void pesquisar_dados(){
-    Arvore *arvore = cria_arvore();
     int m;
 
     do {
+        Arvore *arvore = cria_arvore();
         printf("Os dados devem ser ordenados por qual informacao?\n");
         printf("1. Dia de entrada\n");
         printf("2. Mes de entrada\n");
         printf("3. Ano de entrada\n");
         printf("4. Idade do paciente\n");
-        printf("5. Idade do paciente\n");
+        printf("5. Sair da funcao\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &m);
 
