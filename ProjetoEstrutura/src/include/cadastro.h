@@ -34,5 +34,7 @@ void remover(Lista *lista, char rg[20]);
 void mostrar_lista(Lista *lista);
 void mostrar_paciente(Lista *lista, char rg[20]);
 void alterar(Lista *lista, char rg[20]);
+void liberar_lista(Lista *lista);
+int lista(void);
 
 #endif
