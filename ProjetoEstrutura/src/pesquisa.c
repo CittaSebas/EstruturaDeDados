@@ -4,6 +4,8 @@
 #include "include/pesquisa.h"
 #include "include/cadastro.h"
 
+
+
 // Funcao para mostrar a arvore em ordem, com o parametro do modo escolhemos por qual valor
 // do registro do paciente deve ser ordenada a busca
 void in_ordem(Vertice *raiz, int modo) {
