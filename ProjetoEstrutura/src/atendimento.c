@@ -4,14 +4,29 @@
 #include "include/atendimento.h"
 #include "include/cadastro.h"
 
-Celula *criar_celula(Registro *registro, int m){
+
+// Retorna celula do stack recebendo um registro e um modo (m) a depender da operacao que foi feita na fila
+Celula *criar_celula(Registro *registro, int m) {
     Celula *celula = malloc(sizeof(Celula));
     celula->anterior = NULL;
-    celula ->proximo = NULL;
-    celula->registro = registro;
+    celula->proximo = NULL;
+    // Aloca memoria para os dois structs que fazem parte do registro
+    celula->registro = malloc(sizeof(Registro));
+    strcpy(celula->registro->nome, registro->nome);
+    strcpy(celula->registro->rg, registro->rg);
+    celula->registro->idade = registro->idade;
+
+    celula->registro->entrada = malloc(sizeof(Data));
+    celula->registro->entrada->dia = registro->entrada->dia;
+    celula->registro->entrada->mes = registro->entrada->mes;
+    celula->registro->entrada->ano = registro->entrada->ano;
+
     celula->modo = m;
     return celula;
 }
+
+
+// Inicializa o stack
 Stack *criar_stack(){
     Stack *stack = malloc(sizeof(Stack));
     stack->topo = NULL;
@@ -28,44 +43,44 @@ void push(Stack *stack, Registro *registro, int m){
     stack->qtde++;
 }
 
+// Funcao que retorna uma mensagem com as informacoes da ultima operacao realizada
 char* show_pop(Stack *stack) {
     if (stack->qtde == 0) {
-        return "Nenhuma ação para desfazer.";
+        return "Nenhuma acao para desfazer.";
     }
     Celula *topo = stack->topo;
     char *mensagem = malloc(300 * sizeof(char)); 
-
+    // Verifica o modo e muda a string de acordo com a operacao
     if (topo->modo == 1) {
         snprintf(mensagem, 300, "Desfazer acao: Enfileiramento do paciente %s (RG: %s)", 
                  topo->registro->nome, topo->registro->rg);
     } else if (topo->modo == 2) {
         snprintf(mensagem, 300, "Desfazer acao: Desenfileiramento do paciente %s (RG: %s)", 
                  topo->registro->nome, topo->registro->rg);
-    } else {
-        snprintf(mensagem, 300, "Ação desconhecida para desfazer.");
-    }
-
+    } 
     return mensagem; 
 }
-
-void pop(Stack *stack, Fila *fila){
-    if(stack->qtde == 0){
-        printf("Stack underflow\n");
-    }
-    Celula *atual = stack->topo;
-    if(stack->qtde >= 1){
-        if(atual->modo == 1){
+// Remove a primeira posicao do stack e desfaz a operacao chamando a funcao adequada a depender do modo na celula do stack
+void pop(Stack *stack, Fila *fila) {
+    // Verifica se o stack nao esta vazio
+    if (stack->qtde >= 1) {
+        Celula *atual = stack->topo;
+        // Verifica o modo salvo no topo do stack
+        if (atual->modo == 1) {
             desfazer_enfileirar(fila);
-        }
-        else{
-            desfazer_desenfileirar(fila,atual->registro);
-        }
+        } else {
+            desfazer_desenfileirar(fila, atual->registro);
         }
         stack->topo = stack->topo->anterior;
+        free(atual->registro);           
         free(atual);
-    stack->qtde--;
+        stack->qtde--;
+    }
+    return;
     
 }
+
+
 
 
 // Elimina o ultimo elemento da fila, para desfazer um enfileiramento indesejado 
@@ -86,8 +101,10 @@ void desfazer_enfileirar(Fila *fila){
             fila->tail = temp;
             fila->tail->proximo = NULL; 
         }
-        printf("Idade do desenfileirado: %d\n", atual->dados->idade);
-        printf("Nome do desenfileirado: %s \n", atual->dados->nome);
+        printf("RG do desenfileirado: %s \n", atual->dados->nome);
+        // Elimina os dados da memoria
+        free(atual->dados->entrada);
+        free(atual->dados);
         free(atual);
         fila->qtd--; 
     } else {
@@ -96,18 +113,10 @@ void desfazer_enfileirar(Fila *fila){
 }
 
 
-
+// Enfileira o paciente desenfileirado, com o registro salvo no stack
 void desfazer_desenfileirar(Fila *fila, Registro *registro) {
-    if (registro == NULL) {
-        printf("Nenhuma ação de desenfileiramento para desfazer!\n");
-        return;
-    }
-    char rg[20];
-    strcpy(rg, registro->rg);
-    Registro *reg = existe_RG(rg);
-
     if (registro != NULL) {
-        EFila *novo = cria_efila(reg);
+        EFila *novo = cria_efila(registro);
         novo->proximo = fila->head; 
         fila->head = novo;
         if (fila->tail == NULL) {
@@ -159,10 +168,24 @@ Registro* existe_RG(char rg[20]){
     liberar_lista(l);
 }
 
+// Funcao para verificar se o rg ja esta enfileirado, retorna 0 para rgs ja enfileirados e 1 para rgs inexistentes na fila
+int rg_enfileirado(Fila *fila, char rg[20]){
+    EFila *atual = fila->head;
+    // Loop while que atravessa a fila e compara os rgs atraves do strcmp
+    while(atual != NULL){
+        if(strcmp(atual->dados->rg, rg ) == 0){
+            return 0;
+        }
+        atual = atual->proximo;
+    }
+    return 1;
+}
+
 // Enfileira um elemento de fila com o registro resgatado pela funcao existe_RG 
 void enfileirar(Fila *fila, Stack *stack, char rg[20]){
     Registro *reg = existe_RG(rg);
-    if(reg != NULL){
+
+    if(reg != NULL && rg_enfileirado(fila,rg) == 1){
         EFila *novo = cria_efila(reg);
         if(fila -> qtd == 0){
             fila->head = novo;
@@ -174,6 +197,10 @@ void enfileirar(Fila *fila, Stack *stack, char rg[20]){
         fila->tail = novo;
         fila->qtd++;
         }
+    else{
+        printf("RG ja esta enfileirado ou nao existe na Lista\n");
+    }
+    
 }
 
 // Tira um elemento da fila e mostra as informacoes do paciente removido
@@ -181,14 +208,11 @@ void desenfileirar(Fila *fila, Stack *stack){
     if(fila->qtd > 0){
         EFila *temp = fila->head;
         push(stack, temp->dados, 2);
-        
         fila->head = fila->head->proximo;
         if(fila->qtd == 1){
-        fila->tail = NULL;
+            fila->tail = NULL;
         }
-
         fila->qtd--;
-        printf("Idade do desenfileirado: %d\n", temp->dados->idade);
         printf("Nome do desenfileirado: %s \n",temp->dados->nome);
         free(temp->dados->entrada);
         free(temp->dados);
@@ -213,25 +237,43 @@ void show(Fila *fila){
     printf("\n");
 }
 
+// -------------------------
+// Funcoes para liberar a fila e o stack
 void liberar_fila(Fila *fila) {
     while (fila->qtd > 0) {  
-        desenfileirar(fila, NULL);  
+        if(fila->qtd > 0){
+        EFila *temp = fila->head;
+        fila->head = fila->head->proximo;
+        if(fila->qtd == 1){
+            fila->tail = NULL;
+        }
+        fila->qtd--;
+        free(temp->dados->entrada);
+        free(temp->dados);
+        free(temp);
     }
-    free(fila);
+    }
 }
 
 void liberar_stack(Stack *stack) {
     while (stack->qtde > 0) {  
-        pop(stack, NULL);  
+        Celula *atual = stack->topo;
+        stack->topo = stack->topo->anterior;
+        free(atual->registro);           
+        free(atual);
+        stack->qtde--;
     }
-    free(stack);
 }
+// -------------------------
 
+// Funcao para acessar as funcionalidades do modulo atendimento
 void atendimento() {
+    // Inicializa a stack e a fila
     Fila *fila = cria_Fila();
     Stack *stack = criar_stack();
     char rg[20];
     int y;
+    // Loop do while para acessar as funcionalidades
     do {
         printf("BOA TARDE\n");
         printf("Escolha o que deseja fazer: \n");
@@ -258,14 +300,21 @@ void atendimento() {
                 break;
             }
             case 4: {
+                // Mostra a mensagem contendo as informacoes da ultima operacao
                 int z;
                 char *mensagem = show_pop(stack);
                 printf("%s \n", mensagem);
+                // Libera a mensagem para evitar fuga de memoria
                 free(mensagem);
+                // Verifica se o usuario quer seguir com a operacao
                 printf("1. Para confirmar\n");
                 scanf("%d", &z);
                 if(z == 1){
                     pop(stack,fila);
+                    break;
+                }
+                else{
+                    break;
                 }
             }
             default: {
@@ -275,6 +324,7 @@ void atendimento() {
         }
     }
     while (y != 5);
+    // Libera a fila e o stack da memoria
     liberar_fila(fila);
     liberar_stack(stack);
 }

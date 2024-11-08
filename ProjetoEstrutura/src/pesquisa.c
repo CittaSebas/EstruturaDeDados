@@ -83,6 +83,8 @@ Arvore *cria_arvore(){
 
 	return arvore;
 }
+
+// -----------------------------
 // Bloco de funcoes que inserem os registros ordenados por determinados valores (dia,ano,mes ou idade)
 // Sao funcoes padrao de insercao em arvore binaria
 void inserir_por_dia(Arvore *arvore, Registro *registro) {
@@ -164,7 +166,6 @@ void inserir_por_idade(Arvore *arvore, Registro *registro) {
     Vertice *novo = cria_vertice(registro);
     Vertice *atual = arvore->raiz;
     Vertice *pai = NULL;
-
     while (atual != NULL) {
         pai = atual;
         if (registro->idade < atual->registro->idade) {
@@ -173,7 +174,6 @@ void inserir_por_idade(Arvore *arvore, Registro *registro) {
             atual = atual->dir;
         }
     }
-
     novo->pai = pai;
     if (pai == NULL) {
         arvore->raiz = novo;
@@ -184,7 +184,7 @@ void inserir_por_idade(Arvore *arvore, Registro *registro) {
     }
     arvore->qtde++;
 }
-//
+// -----------------------------
 
 // Funcao de inserir que chama as funcoes de inserir com o modo estabelecido
 // iterando pela lista carregada ate o seu fim (por isso usamos Elemento de lista)
@@ -232,8 +232,9 @@ void liberar_arvore(Vertice* vertice) {
 // Funcao para o uso desse modulo, para ser chamado no main
 void pesquisar_dados(){
     int m;
-
+    // Loop do while para pesquisar dados 
     do {
+        // Inicializa a arvore e pede para o usuario escolher qual ordem as informacoes devem seguir
         Arvore *arvore = cria_arvore();
         printf("Os dados devem ser ordenados por qual informacao?\n");
         printf("1. Dia de entrada\n");
@@ -243,7 +244,7 @@ void pesquisar_dados(){
         printf("5. Sair da funcao\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &m);
-
+        // Verifica a escolha do usuario e monta a arvore, a mostra e a libera
         if (m >= 1 && m <= 4) {
             inserir(arvore, m);
             in_ordem(arvore->raiz, m);

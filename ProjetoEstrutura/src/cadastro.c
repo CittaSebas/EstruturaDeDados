@@ -42,37 +42,48 @@ int salvarLista(Lista *lista) {
     return 0; 
 }
 
+
 int carregarLista(Lista *lista) {
     //Abre o arquivo em binario e retorna se estiver vazio
     FILE *f = fopen("lista.bin", "rb");
     if (f == NULL) {
         return -1; 
     }
-    //Lendo a quantidade de elementos salvos na lista (para facilitar a travessia na lista)
+    // Le a quantidade de registros salvos no arquivo
     fread(&lista->qtde, sizeof(int), 1, f);
-
     lista->primeiro = NULL;
 
     for (int i = 0; i < lista->qtde; i++) {
         // Alocacao de memoria para data e registro  
-        //!! Por algum motivo nao conseguia alocar a memoria da data direto no registro !!
-        // e tive que criar uma variavel (data) adicional
+        // !! Por algum motivo nao funcionava alocando a memoria da data direto no registro !!
+        // e tivemos que criar uma variavel (data) adicional
         Registro *registro = malloc(sizeof(Registro));
         Data *data = malloc(sizeof(Data));
         //Lendo as informacoes do arquivo em tamanho de data e registro
         fread(registro, sizeof(Registro), 1, f);
         fread(data, sizeof(Data), 1, f);
+
         ELista *novo = criar_ELista(registro);
         //Salvando a data manualmente 
         novo->dados->entrada = malloc(sizeof(Data));
         novo->dados->entrada->dia = data->dia;
         novo->dados->entrada->mes = data->mes;
         novo->dados->entrada->ano = data->ano;
-        novo->proximo = lista->primeiro;
-        lista->primeiro = novo; 
+        // Para manter a ordem de insercao percorremos a lista e inserimos o paciente no final da lista
+        if (lista->primeiro == NULL) {  
+            lista->primeiro = novo;  
+        } else {
+            
+            ELista *atual = lista->primeiro;
+            while (atual->proximo != NULL) {
+                atual = atual->proximo;
+            }
+            atual->proximo = novo;  
+        }
         //Liberando a variavel adicional
-        free(data);
+        free(data);  
     }
+    
     fclose(f);
     return 0; 
 }
@@ -92,10 +103,17 @@ void cadastrar(Lista *lista){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
 
-    // Pedindo as informacoes para o usuario
-    dia = tm.tm_mday;
-    mes = tm.tm_mon + 1;
-    ano = tm.tm_year + 1900;
+    // Resgatando a data com time.h
+    // dia = tm.tm_mday;
+    // mes = tm.tm_mon + 1;
+    // ano = tm.tm_year + 1900;
+    printf("Digite o Dia:\n");  
+    scanf("%d",&dia);
+    printf("Digite o Mes:\n");  
+    scanf("%d",&mes);
+    printf("Digite el Ano:\n");  
+    scanf("%d",&ano);
+     // Pedindo as informacoes para o usuario
     getchar();
     printf("Digite o Nome:\n");
     fgets(nome, sizeof(nome), stdin);
@@ -249,12 +267,14 @@ void alterar(Lista *lista, char rg[20]){
 
 }
 
+// Funcao para ser usada na main com todas as funcionalidades do modulo de cadastro
 int lista(void){
   char rg[20];
   int y;
+  // Cria lista e carrega as informacoes do arquivo 
   Lista *lista = criar_lista();
   carregarLista(lista);
-  
+  // Loop do while para o usuario acessar as funcionalidades
   do {
     printf("BOA TARDE\n");
     printf("Escolha o que deseja fazer: \n");
@@ -313,7 +333,7 @@ int lista(void){
   return 0;
 }
 
-
+// Funcao para liberar a lista usada pela funcao lista() 
 void liberar_lista(Lista *lista){
     ELista *atual = lista->primeiro;
     while(lista->qtde > 0){
